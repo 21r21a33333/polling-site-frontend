@@ -82,7 +82,7 @@ const Page: React.FC<PageProps> = ({ params }) => {
         <p className="text-yellow-500">Updating poll data...</p>
       ) : (
         pollStats && (
-          <div>
+          <div className="p-4 max-w-xl mx-auto">
             <h1 className="text-2xl font-bold mb-4">
               {pollStats.title} Statistics
             </h1>

@@ -9,6 +9,15 @@ import {
 } from "@/app/store/voteSlice";
 import { RootState } from "@/app/store/store";
 import { resetPoll } from "@/app/store/pollSlice";
+import { startAuthentication } from "@simplewebauthn/browser";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"; // Import Recharts components
 
 const PollComponent = ({
   params,
@@ -18,6 +27,7 @@ const PollComponent = ({
   };
 }) => {
   const pollId = params.pollid;
+  const email = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
   const userEmail = useSelector((state: RootState) => state.auth.user);
   const poll = useSelector((state: RootState) => selectPoll(state));
@@ -77,7 +87,12 @@ const PollComponent = ({
         try {
           const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
           const response = await fetch(
-            `${NEXT_PUBLIC_API_URL}/api/question_attempted?email=${userEmail}&qid=${question.id}`
+            `${NEXT_PUBLIC_API_URL}/api/question_attempted?email=${userEmail}&qid=${question.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
           );
           const data = await response.json();
           if (data.answered) {
@@ -95,11 +110,90 @@ const PollComponent = ({
     setSelectedOption((prev) => ({ ...prev, [questionId]: optionId }));
   };
 
+  const handleRegister = async (option_id: string) => {
+    setError(""); // Clear any previous errors
+    try {
+      const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const resp = await fetch(NEXT_PUBLIC_API_URL + "/start_verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          email,
+        }),
+      });
+
+      if (!resp.ok) {
+        if (resp.status === 400) {
+          setError("User Not Found");
+        } else {
+          setError(`Server error: ${resp.status} ${resp.statusText}`);
+        }
+        return;
+      }
+
+      const data = await resp.json();
+      if (!data || !data.publicKey) {
+        setError("Invalid server response: missing publicKey");
+        return;
+      }
+      // console.log(data);
+      try {
+        const obj = data.publicKey;
+        const attResp = await startAuthentication({ optionsJSON: obj });
+        // console.log("Login response:", attResp); // Debug log
+
+        // POST the response to the endpoint that calls
+        // @simplewebauthn/server -> verifyRegistrationResponse()
+        const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+        const verificationResp = await fetch(NEXT_PUBLIC_API_URL + "/getpass", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+            authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            email,
+            public_key_credential: attResp,
+            option_id: option_id,
+          }),
+        });
+
+        // Wait for the results of verification
+        console.log("Waiting for verification response..."); // Debug log
+        const verificationJSON = await verificationResp.json();
+        // console.log("Verification response:", verificationJSON); // Debug log
+        // Handle successful registration (e.g., redirect or update UI)
+        // Save token to localStorage
+        const token = verificationJSON.vote_token;
+        return token;
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error("Login error:", error);
+          setError(`Login error: ${error.name} - ${error.message}`);
+        } else {
+          setError("An unknown error occurred during Login");
+        }
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError("Network error during Login");
+    }
+  };
+
   // Submit vote
   const submitVote = async (questionId: number) => {
     if (!selectedOption[questionId]) return;
 
     try {
+      const pass_token = await handleRegister(
+        selectedOption[questionId].toString()
+      );
+      console.log(pass_token);
       const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
       const response = await fetch(
         `${NEXT_PUBLIC_API_URL}/api/polls/${pollId}/vote`,
@@ -108,12 +202,9 @@ const PollComponent = ({
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
             "Content-Type": "application/json",
+            Authentication: `Bearer ${pass_token}`,
           },
           cache: "no-store",
-          body: JSON.stringify({
-            email: userEmail,
-            option_id: selectedOption[questionId].toString(),
-          }),
         }
       );
       if (!response.ok) throw new Error("Failed to submit vote");
@@ -140,6 +231,7 @@ const PollComponent = ({
 
   // Close modal
   const closeModal = () => {
+    setScores({}); // Clear scores
     setModalVisible(false);
     setSelectedOption({});
   };
@@ -203,35 +295,53 @@ const PollComponent = ({
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 w-96 shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Vote Statistics</h2>
-            {Object.entries(scores).map(([questionId, scoreData]) => (
-              <div key={questionId} className="mb-4">
-                <h3 className="font-medium">{scoreData.question_id}</h3>
-                {scoreData.options.map((option) => {
-                  const totalVotes = scoreData.options.reduce(
-                    (total, opt) => total + opt.score,
-                    0
-                  );
-                  const percentage =
-                    totalVotes > 0 ? (option.score / totalVotes) * 100 : 0;
+            {Object.entries(scores).map(([questionId, scoreData]) => {
+              // Prepare data for the chart
+              const totalVotes = scoreData.options.reduce(
+                (total, option) => total + option.score,
+                0
+              );
 
-                  return (
-                    <div key={option.id} className="mb-2">
-                      <div className="flex items-center justify-between">
-                        <span>{option.option_text}</span>
-                        <span>{option.score} votes</span>
+              const chartData = scoreData.options.map((option) => ({
+                name: option.option_text,
+                votes: option.score,
+                percentage:
+                  totalVotes > 0 ? (option.score / totalVotes) * 100 : 0,
+              }));
+
+              return (
+                <div key={questionId} className="mb-4">
+                  <h3 className="font-medium">{scoreData.question_id}</h3>
+
+                  {/* Recharts Bar Chart */}
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={chartData}>
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="votes" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+
+                  {scoreData.options.map((option) => {
+                    const percentage =
+                      totalVotes > 0 ? (option.score / totalVotes) * 100 : 0;
+
+                    return (
+                      <div key={option.id} className="mb-2">
+                        <div className="flex items-center justify-between">
+                          <span>{option.option_text}</span>
+                          <span>{option.score} votes</span>
+                        </div>
+                        <span className="text-sm">
+                          {percentage.toFixed(1)}%
+                        </span>
                       </div>
-                      <div className="w-full h-6 bg-gray-200 rounded-full dark:bg-gray-700">
-                        <div
-                          className="h-6 bg-blue-600 rounded-full dark:bg-blue-500"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm">{percentage.toFixed(1)}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                    );
+                  })}
+                </div>
+              );
+            })}
             <button
               onClick={closeModal}
               className="bg-black text-white py-2 px-4 rounded mt-4"

@@ -1,6 +1,6 @@
 import React from "react";
-import Pollsheading from "./Pollsheading";
-import Polls from "./ClosedPolls";
+import Pollsheading from "../../components/polls/Pollsheading";
+import Polls from "../../components/polls/ClosedPolls";
 function page() {
   return (
     <div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import PollCard from "@/app/components/polls/PollCard";
 import { useSelector } from "react-redux";
-import Pollsheading from "../Pollsheading";
+import Pollsheading from "../../../components/polls/Pollsheading";
 
 interface Poll {
   id: number;

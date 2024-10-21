@@ -51,6 +51,7 @@ const pollSlice = createSlice({
       state.description = "";
       state.creator_email = "";
       state.questions = [];
+
       localStorage.removeItem("pollState");
     },
   },
