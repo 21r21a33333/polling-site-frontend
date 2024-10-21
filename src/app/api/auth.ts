@@ -4,7 +4,8 @@ import { RegisterStartRequest, RegisterStartResponse } from "@/types";
 export const startRegistration = async (
   username: string
 ): Promise<RegisterStartResponse> => {
-  const response = await fetch("http://localhost:3001/registrationstart", {
+  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const response = await fetch(NEXT_PUBLIC_API_URL + "/registrationstart", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
