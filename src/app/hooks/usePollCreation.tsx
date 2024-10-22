@@ -28,6 +28,7 @@ export const usePollCreation = () => {
 
   const handleSubmitPoll = async () => {
     let poll = JSON.parse(localStorage.getItem("pollState"));
+    console.log("Submitting poll:", poll);
     const pollData = {
       title: poll.title,
       description: poll.description,
