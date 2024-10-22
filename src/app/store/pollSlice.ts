@@ -44,7 +44,10 @@ const pollSlice = createSlice({
     },
     addQuestion: (state, action: PayloadAction<PollOption>) => {
       state.questions.push(action.payload);
+
       localStorage.setItem("pollState", JSON.stringify(state));
+      console.log("state is ____________________");
+      console.log(JSON.parse(localStorage.getItem("pollState")));
     },
     resetPoll: (state) => {
       state.title = "";

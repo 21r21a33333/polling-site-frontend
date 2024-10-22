@@ -9,23 +9,12 @@ import {
 } from "@/app/store/voteSlice";
 import { RootState } from "@/app/store/store";
 import { resetPoll } from "@/app/store/pollSlice";
+import PollHeader from "@/app/components/voting/PollHeader";
+import QuestionComponent from "@/app/components/voting/QuestionComponent";
+import VoteModal from "@/app/components/voting/VoteModal";
 import { startAuthentication } from "@simplewebauthn/browser";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"; // Import Recharts components
 
-const PollComponent = ({
-  params,
-}: {
-  params: {
-    pollid: number;
-  };
-}) => {
+const PollComponent = ({ params }: { params: { pollid: number } }) => {
   const pollId = params.pollid;
   const email = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
@@ -40,13 +29,8 @@ const PollComponent = ({
     [key: number]: number;
   }>({});
   const [modalVisible, setModalVisible] = useState(false);
-  const [scores, setScores] = useState<{
-    [key: number]: {
-      question_id: number;
-      options: { id: number; option_text: string; score: number }[];
-    };
-  }>({});
-  const [pollClosed, setPollClosed] = useState(false); // New state variable
+  const [scores, setScores] = useState<any>({});
+  const [pollClosed, setPollClosed] = useState(false);
 
   // Fetch poll data
   useEffect(() => {
@@ -105,12 +89,10 @@ const PollComponent = ({
     }
   }, [poll, userEmail, dispatch]);
 
-  // Handle option selection
   const handleOptionSelect = (questionId: number, optionId: number) => {
     setSelectedOption((prev) => ({ ...prev, [questionId]: optionId }));
   };
-
-  const handleRegister = async (option_id: string) => {
+  const GetPass = async (option_id: string) => {
     setError(""); // Clear any previous errors
     try {
       const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -190,9 +172,7 @@ const PollComponent = ({
     if (!selectedOption[questionId]) return;
 
     try {
-      const pass_token = await handleRegister(
-        selectedOption[questionId].toString()
-      );
+      const pass_token = await GetPass(selectedOption[questionId].toString());
       console.log(pass_token);
       const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
       const response = await fetch(
@@ -229,9 +209,8 @@ const PollComponent = ({
     }
   };
 
-  // Close modal
   const closeModal = () => {
-    setScores({}); // Clear scores
+    setScores({});
     setModalVisible(false);
     setSelectedOption({});
   };
@@ -242,115 +221,24 @@ const PollComponent = ({
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">{poll.title}</h1>
-      <p className="mb-4">{poll.description}</p>
-      <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+      <PollHeader title={poll.title} description={poll.description} />
       {poll.questions.map((question) => (
-        <div key={question.id} className="mb-6">
-          <h3 className="text-lg font-medium mb-2 font-bold">
-            {question.question_text}
-          </h3>
-
-          {/* Check if the question has been answered */}
-          {answeredQuestions.includes(question.id) ? (
-            <div className="text-green-500">
-              You have already answered this question.
-            </div>
-          ) : (
-            <>
-              {question.options.map((option) => (
-                <div
-                  key={option.id}
-                  className="flex items-center ps-4 border border-gray-200 rounded mb-2"
-                >
-                  <input
-                    type="radio"
-                    name={`question-${question.id}`}
-                    value={option.id}
-                    onChange={() => handleOptionSelect(question.id, option.id)}
-                    checked={selectedOption[question.id] === option.id}
-                    className="w-4 h-4 text-blue-600"
-                    disabled={pollClosed} // Disable input if poll is closed
-                  />
-                  <label className="w-full py-4 ms-2 text-sm font-medium">
-                    {option.option_text}
-                  </label>
-                </div>
-              ))}
-              <button
-                onClick={() => submitVote(question.id)}
-                className="bg-black text-white py-2 px-4 rounded mt-4"
-                disabled={pollClosed || !selectedOption[question.id]} // Disable button if poll is closed
-              >
-                {pollClosed ? "Cannot Submit" : "Submit Vote"}
-              </button>
-              <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700"></hr>
-            </>
-          )}
-        </div>
+        <QuestionComponent
+          key={question.id}
+          question={question}
+          answeredQuestions={answeredQuestions}
+          selectedOption={selectedOption}
+          handleOptionSelect={handleOptionSelect}
+          submitVote={submitVote}
+          pollClosed={pollClosed}
+        />
       ))}
 
-      {/* Modal for displaying scores */}
-      {modalVisible && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-4 w-96 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Vote Statistics</h2>
-            {Object.entries(scores).map(([questionId, scoreData]) => {
-              // Prepare data for the chart
-              const totalVotes = scoreData.options.reduce(
-                (total, option) => total + option.score,
-                0
-              );
-
-              const chartData = scoreData.options.map((option) => ({
-                name: option.option_text,
-                votes: option.score,
-                percentage:
-                  totalVotes > 0 ? (option.score / totalVotes) * 100 : 0,
-              }));
-
-              return (
-                <div key={questionId} className="mb-4">
-                  <h3 className="font-medium">{scoreData.question_id}</h3>
-
-                  {/* Recharts Bar Chart */}
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={chartData}>
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="votes" fill="#8884d8" />
-                    </BarChart>
-                  </ResponsiveContainer>
-
-                  {scoreData.options.map((option) => {
-                    const percentage =
-                      totalVotes > 0 ? (option.score / totalVotes) * 100 : 0;
-
-                    return (
-                      <div key={option.id} className="mb-2">
-                        <div className="flex items-center justify-between">
-                          <span>{option.option_text}</span>
-                          <span>{option.score} votes</span>
-                        </div>
-                        <span className="text-sm">
-                          {percentage.toFixed(1)}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-            <button
-              onClick={closeModal}
-              className="bg-black text-white py-2 px-4 rounded mt-4"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <VoteModal
+        scores={scores}
+        modalVisible={modalVisible}
+        closeModal={closeModal}
+      />
     </div>
   );
 };
