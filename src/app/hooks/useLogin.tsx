@@ -41,7 +41,7 @@ export default function useLogin() {
         setError("Invalid server response: missing publicKey");
         return;
       }
-
+      console.log(data);
       const attResp = await startAuthentication({
         optionsJSON: data.publicKey,
       });
@@ -62,6 +62,7 @@ export default function useLogin() {
       );
 
       const verificationJSON = await verificationResp.json();
+      console.log("Login response:", verificationJSON);
       const token = verificationJSON.token;
       localStorage.setItem("token", token);
 

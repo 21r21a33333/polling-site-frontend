@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import PollCard from "@/app/components/polls/PollCard";
 import { useSelector } from "react-redux";
 import Pollsheading from "../../../components/polls/Pollsheading";
+import Pagination from "../../../components/Pagination"; // Import the Pagination component
 
 interface Poll {
   id: number;
@@ -18,10 +19,17 @@ const Page = () => {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination states for open and closed polls
+  const [currentOpenPage, setCurrentOpenPage] = useState<number>(1);
+  const [currentClosedPage, setCurrentClosedPage] = useState<number>(1);
+  const [pollsPerPage] = useState<number>(3); // Adjust the number of polls per page here
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const creator: string = useSelector(
     (state: { auth: { user: string } }) => state.auth.user
   );
+
   useEffect(() => {
     const fetchPolls = async () => {
       try {
@@ -71,22 +79,59 @@ const Page = () => {
   if (error)
     return <div className="text-center text-red-500">Error: {error}</div>;
 
+  // Filter open and closed polls
+  const openPolls = polls.filter((poll) => !poll.closed);
+  const closedPolls = polls.filter((poll) => poll.closed);
+
+  // Pagination calculations for open polls
+  const totalOpenPolls = openPolls.length;
+  const indexOfLastOpenPoll = currentOpenPage * pollsPerPage;
+  const indexOfFirstOpenPoll = indexOfLastOpenPoll - pollsPerPage;
+  const currentOpenPolls = openPolls.slice(
+    indexOfFirstOpenPoll,
+    indexOfLastOpenPoll
+  );
+  const totalOpenPages = Math.ceil(totalOpenPolls / pollsPerPage);
+
+  // Pagination calculations for closed polls
+  const totalClosedPolls = closedPolls.length;
+  const indexOfLastClosedPoll = currentClosedPage * pollsPerPage;
+  const indexOfFirstClosedPoll = indexOfLastClosedPoll - pollsPerPage;
+  const currentClosedPolls = closedPolls.slice(
+    indexOfFirstClosedPoll,
+    indexOfLastClosedPoll
+  );
+  const totalClosedPages = Math.ceil(totalClosedPolls / pollsPerPage);
+
   return (
     <div>
       <Pollsheading content="My Open Polls" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-32 py-8">
-        {polls.map(
-          (poll) =>
-            !poll.closed && <PollCard key={poll.id} poll={poll} admin={true} />
-        )}
+        {currentOpenPolls.map((poll) => (
+          <PollCard key={poll.id} poll={poll} admin={true} />
+        ))}
       </div>
+
+      {/* Pagination for Open Polls */}
+      <Pagination
+        currentPage={currentOpenPage}
+        totalPages={totalOpenPages}
+        onPageChange={setCurrentOpenPage}
+      />
+
       <Pollsheading content="My Closed Polls" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-32 py-8">
-        {polls.map(
-          (poll) =>
-            poll.closed && <PollCard key={poll.id} poll={poll} admin={true} />
-        )}
+        {currentClosedPolls.map((poll) => (
+          <PollCard key={poll.id} poll={poll} admin={true} />
+        ))}
       </div>
+
+      {/* Pagination for Closed Polls */}
+      <Pagination
+        currentPage={currentClosedPage}
+        totalPages={totalClosedPages}
+        onPageChange={setCurrentClosedPage}
+      />
     </div>
   );
 };

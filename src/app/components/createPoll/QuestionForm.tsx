@@ -44,8 +44,11 @@ const QuestionForm = () => {
 
         <div className="mt-2">
           {options.map((opt, index) => (
-            <div key={index} className="p-2 bg-gray-200 rounded my-1">
-              {opt}
+            <div
+              key={index}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 mt-2"
+            >
+              {opt.toLocaleUpperCase()}
             </div>
           ))}
         </div>

@@ -19,8 +19,8 @@ function PollCard({ poll, admin = false }: { poll: Poll; admin?: boolean }) {
             : poll.title}
         </h1>
         <p className="text-gray-600 mb-4">
-          {poll.description.length > 100
-            ? `${poll.description.substring(0, 100)}...`
+          {poll.description.length > 45
+            ? `${poll.description.substring(0, 45)}...`
             : poll.description}
         </p>
         <p className="text-sm text-gray-500">

@@ -10,7 +10,7 @@ function AdminUtils({ pollid, closed }: { pollid: number; closed: boolean }) {
   const dispatch2: AppDispatch = useDispatch(); // Type the dispatch correctly
   const dispatch = useDispatch();
   const userEmail = useSelector((state: RootState) => state.auth.user);
-  console.log("___closed", closed);
+
   async function resetPoll() {
     try {
       const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
