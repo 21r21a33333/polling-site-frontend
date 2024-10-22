@@ -18,7 +18,7 @@ const Polls = ({ closed }: { closed: boolean }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pollsPerPage] = useState<number>(3); // Adjust the number of polls per page here
+  const [pollsPerPage] = useState<number>(6); // Adjust the number of polls per page here
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
@@ -85,8 +85,8 @@ const Polls = ({ closed }: { closed: boolean }) => {
     return <div className="text-center text-red-500">Error: {error}</div>;
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-32 py-8">
+    <div className="px-32 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
         {currentPolls.map((poll) => (
           <PollCard poll={poll} key={poll.id} />
         ))}

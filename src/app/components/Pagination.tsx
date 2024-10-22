@@ -15,7 +15,7 @@ const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
 }) => {
   return (
-    <div className="flex justify-center my-4">
+    <div className="flex justify-end my-8">
       {/* Previous Button */}
       <Link
         href="#"
@@ -45,6 +45,11 @@ const Pagination: React.FC<PaginationProps> = ({
         Previous
       </Link>
 
+      {/* Page Number Display */}
+      <span className="flex items-center justify-center  h-8 text-sm font-medium text-gray-700">
+        Page {currentPage} of {totalPages}
+      </span>
+
       {/* Next Button */}
       <Link
         href="#"
@@ -52,7 +57,7 @@ const Pagination: React.FC<PaginationProps> = ({
           e.preventDefault();
           if (currentPage < totalPages) onPageChange(currentPage + 1);
         }}
-        className={`flex items-center justify-center px-3 h-8 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 ${
+        className={`flex items-center justify-center px-3 h-8 ms-3 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 ${
           currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
         }`}
       >

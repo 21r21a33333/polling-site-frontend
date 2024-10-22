@@ -11,7 +11,7 @@ interface Poll {
 
 function PollCard({ poll, admin = false }: { poll: Poll; admin?: boolean }) {
   return (
-    <div key={poll.id} className="bg-white shadow-lg rounded-lg p-6">
+    <div key={poll.id} className="bg-white shadow-lg rounded-lg p-6 ">
       <Link href={admin ? `/polls/manage/${poll.id}` : `/polls/${poll.id}`}>
         <h1 className="text-xl font-bold mb-2">
           {poll.title.length > 35

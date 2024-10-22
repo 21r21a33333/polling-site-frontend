@@ -23,7 +23,7 @@ const Page = () => {
   // Pagination states for open and closed polls
   const [currentOpenPage, setCurrentOpenPage] = useState<number>(1);
   const [currentClosedPage, setCurrentClosedPage] = useState<number>(1);
-  const [pollsPerPage] = useState<number>(3); // Adjust the number of polls per page here
+  const [pollsPerPage] = useState<number>(6); // Adjust the number of polls per page here
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const creator: string = useSelector(
