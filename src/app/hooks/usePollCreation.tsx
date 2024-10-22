@@ -4,7 +4,7 @@ import { RootState } from "@/app/store/store";
 import { addQuestion, resetPoll } from "@/app/store/pollSlice";
 
 export const usePollCreation = () => {
-  const poll = useSelector((state: RootState) => state.poll);
+  const poll = JSON.parse(localStorage.getItem("pollState") || "{}");
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
   const [questionText, setQuestionText] = useState("");
@@ -27,6 +27,7 @@ export const usePollCreation = () => {
   };
 
   const handleSubmitPoll = async () => {
+    console.log("Submitting poll:", poll);
     const pollData = {
       title: poll.title,
       description: poll.description,
