@@ -17,3 +17,12 @@ export interface CredentialData {
   };
   type: string; // The credential type
 }
+
+export interface Poll {
+  id: number;
+  title: string;
+  description: string;
+  creator_email: string;
+  created_at: string;
+  closed: boolean;
+}

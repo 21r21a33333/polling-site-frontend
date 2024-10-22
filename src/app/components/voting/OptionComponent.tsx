@@ -17,11 +17,7 @@ const OptionComponent = ({
   return (
     <div
       key={option.id}
-<<<<<<< HEAD
       className="flex items-center ps-4 border border-gray-200 rounded mb-2 "
-=======
-      className="flex items-center ps-4 border border-gray-200 rounded mb-2"
->>>>>>> 7fdbd6bd19fcafe56a7513a258f4601ad01f7118
     >
       <input
         type="radio"

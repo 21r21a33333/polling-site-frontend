@@ -65,6 +65,7 @@ export default function useLogin() {
       console.log("Login response:", verificationJSON);
       const token = verificationJSON.token;
       localStorage.setItem("token", token);
+      document.cookie = `token=${token}; path=/; `;
 
       const decodedToken = jwt.decode(token);
       if (!decodedToken || typeof decodedToken !== "object") {

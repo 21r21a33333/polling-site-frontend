@@ -1,17 +1,13 @@
-import React from "react";
-import Pollsheading from "../../components/polls/Pollsheading";
-import Polls from "../../components/polls/ClosedPolls";
+import PollsContainer from "@/app/components/polls/PollsContainer";
+import Pollsheading from "@/app/components/polls/Pollsheading";
 
-
-function page() {
+export default function PollsPage() {
   return (
     <div>
       <Pollsheading content="Currently Open" />
-      <Polls closed={false} />
-      <Pollsheading content="Closed Closed" />
-      <Polls closed={true} />
+      <PollsContainer closed={false} />
+      <Pollsheading content="Closed Polls" />
+      <PollsContainer closed={true} />
     </div>
   );
 }
-
-export default page;
