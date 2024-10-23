@@ -2,6 +2,8 @@
 import { RootState } from "@/app/store/store";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+
 import {
   selectPoll,
   resetPoll,
@@ -204,6 +206,9 @@ function useHandleVote({
       );
       const scoresData = await scoresResponse.json();
       setScores((prev) => ({ ...prev, [questionId]: scoresData }));
+
+      // Show success toast after fetching scores
+      toast.success("Answered successfully!");
       setModalVisible(true); // Show the modal after fetching scores
 
       dispatch(answerQuestion(questionId));
